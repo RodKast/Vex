@@ -57,7 +57,7 @@ func (c *Crawler) Crawl(ctx context.Context, startURL string) []types.InjectionP
 	return c.points
 }
 
-func (c *Crawler) parse(ctx context.Context, baseURL string, body []byte) []string {
+func (c *Crawler) parse(_ context.Context, baseURL string, body []byte) []string {
 	doc, err := html.Parse(bytes.NewReader(body))
 	if err != nil {
 		return nil
@@ -87,9 +87,10 @@ func (c *Crawler) parse(ctx context.Context, baseURL string, body []byte) []stri
 		} else if n.Data == "input" {
 			var name, value string
 			for _, attr := range n.Attr {
-				if attr.Key == "name" {
+				switch attr.Key {
+				case "name":
 					name = attr.Val
-				} else if attr.Key == "value" {
+				case "value":
 					value = attr.Val
 				}
 			}

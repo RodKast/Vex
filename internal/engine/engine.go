@@ -43,7 +43,7 @@ func (e *Engine) Do(ctx context.Context, req types.Request) types.Response {
 	if err != nil {
 		return types.Response{URL: req.URL, Error: err, Elapsed: time.Since(start)}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return types.Response{URL: req.URL, Error: err, Elapsed: time.Since(start)}
