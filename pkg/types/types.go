@@ -26,6 +26,14 @@ type Response struct {
 	Error      error
 }
 
+type InjectionPoint struct {
+	URL           string
+	Parameter     string
+	Type          string
+	Method        string
+	OriginalValue string
+}
+
 func NewConfig() Config {
 	return Config{
 		Timeout:     30,
