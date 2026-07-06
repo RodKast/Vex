@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type Config struct {
 	Target      string
@@ -32,6 +35,25 @@ type InjectionPoint struct {
 	Type          string
 	Method        string
 	OriginalValue string
+}
+
+type Finding struct {
+	Title       string
+	URL         string
+	Parameter   string
+	Severity    string
+	Description string
+	Evidence    string
+	Confirmed   bool
+}
+
+type VulnCheck interface {
+	Name() string
+	Run(ctx context.Context, point InjectionPoint, eng RequestDoer) []Finding
+}
+
+type RequestDoer interface {
+	Do(ctx context.Context, req Request) Response
 }
 
 func NewConfig() Config {
