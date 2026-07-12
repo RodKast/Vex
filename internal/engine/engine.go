@@ -36,6 +36,9 @@ func (e *Engine) Do(ctx context.Context, req types.Request) types.Response {
 	for key, val := range req.Headers {
 		r.Header.Set(key, val)
 	}
+	if e.config.Cookie != "" {
+		r.Header.Set("Cookie", e.config.Cookie)
+	}
 	if err := e.limiter.Wait(ctx); err != nil {
 		return types.Response{URL: req.URL, Error: err, Elapsed: time.Since(start)}
 	}
