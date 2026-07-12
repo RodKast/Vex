@@ -2,6 +2,7 @@ package checks
 
 import (
 	"context"
+	"net/url"
 	"strings"
 
 	"github.com/RodKast/Vex/pkg/types"
@@ -15,7 +16,14 @@ func (s *SQLiCheck) Name() string {
 
 func (s *SQLiCheck) Run(ctx context.Context, point types.InjectionPoint, eng types.RequestDoer) []types.Finding {
 	payload := "'"
-	injectedURL := strings.Replace(point.URL, point.OriginalValue, payload, 1)
+	parsed, err := url.Parse(point.URL)
+	if err != nil {
+		return nil
+	}
+	params := parsed.Query()
+	params.Set(point.Parameter, payload)
+	parsed.RawQuery = params.Encode()
+	injectedURL := parsed.String()
 
 	resp := eng.Do(ctx, types.Request{URL: injectedURL, Method: point.Method})
 	if resp.Error != nil {
