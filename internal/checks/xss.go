@@ -2,6 +2,7 @@ package checks
 
 import (
 	"context"
+	"net/url"
 	"strings"
 
 	"github.com/RodKast/Vex/pkg/types"
@@ -19,7 +20,14 @@ func (x *XSSCheck) Run(ctx context.Context, point types.InjectionPoint,
 	nonce := "vex" + point.Parameter + "xss"
 	payload := "<script>" + nonce + "</script>"
 
-	injectedURL := strings.Replace(point.URL, point.OriginalValue, payload, 1)
+	parsed, err := url.Parse(point.URL)
+	if err != nil {
+		return nil
+	}
+	params := parsed.Query()
+	params.Set(point.Parameter, payload)
+	parsed.RawQuery = params.Encode()
+	injectedURL := parsed.String()
 
 	resp := eng.Do(ctx, types.Request{
 		URL:    injectedURL,
@@ -30,6 +38,7 @@ func (x *XSSCheck) Run(ctx context.Context, point types.InjectionPoint,
 	}
 
 	if strings.Contains(string(resp.Body), nonce) {
+
 		return []types.Finding{{
 			Title:       "Reflected XSS",
 			URL:         point.URL,

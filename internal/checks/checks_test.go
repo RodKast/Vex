@@ -200,8 +200,8 @@ func TestXSSCheck_Run(t *testing.T) {
 	}
 
 	fakeResponses := map[string]types.Response{
-		"http://example.com/search?q=<script>vexqxss</script>": {
-			URL:        "http://example.com/search?q=<script>vexqxss</script>",
+		"http://example.com/search?q=%3Cscript%3Evexqxss%3C%2Fscript%3E": {
+			URL:        "http://example.com/search?q=%3Cscript%3Evexqxss%3C%2Fscript%3E",
 			StatusCode: 200,
 			Headers:    map[string]string{},
 			Body:       []byte("<html><body>Search results for <script>vexqxss</script></body></html>"),
@@ -232,8 +232,8 @@ func TestXSSCheck_Run_NoXSS(t *testing.T) {
 	}
 
 	fakeResponses := map[string]types.Response{
-		"http://example.com/search?q=<script>vexqxss</script>": {
-			URL:        "http://example.com/search?q=<script>vexqxss</script>",
+		"http://example.com/search?q=%3Cscript%3Evexqxss%3C%2Fscript%3E": {
+			URL:        "http://example.com/search?q=%3Cscript%3Evexqxss%3C%2Fscript%3E",
 			StatusCode: 200,
 			Headers:    map[string]string{},
 			Body:       []byte("<html><body>Search results for test</body></html>"),
@@ -259,8 +259,8 @@ func TestPathTraversalCheck_Run(t *testing.T) {
 	}
 
 	fakeResponses := map[string]types.Response{
-		"http://example.com/file?name=../../../../etc/passwd": {
-			URL:        "http://example.com/file?name=../../../../etc/passwd",
+		"http://example.com/file?name=..%2F..%2F..%2F..%2Fetc%2Fpasswd": {
+			URL:        "http://example.com/file?name=..%2F..%2F..%2F..%2Fetc%2Fpasswd",
 			StatusCode: 200,
 			Headers:    map[string]string{},
 			Body:       []byte("root:x:0:0:root:/root:/bin/bash"),
@@ -291,8 +291,8 @@ func TestPathTraversalCheck_Run_NoTraversal(t *testing.T) {
 	}
 
 	fakeResponses := map[string]types.Response{
-		"http://example.com/file?name=../../../../etc/passwd": {
-			URL:        "http://example.com/file?name=../../../../etc/passwd",
+		"http://example.com/file?name=..%2F..%2F..%2F..%2Fetc%2Fpasswd": {
+			URL:        "http://example.com/file?name=..%2F..%2F..%2F..%2Fetc%2Fpasswd",
 			StatusCode: 200,
 			Headers:    map[string]string{},
 			Body:       []byte("File not found"),
@@ -318,8 +318,8 @@ func TestSQLiCheck_Run(t *testing.T) {
 	}
 
 	fakeResponses := map[string]types.Response{
-		"http://example.com/search?q='": {
-			URL:        "http://example.com/search?q='",
+		"http://example.com/search?q=%27": {
+			URL:        "http://example.com/search?q=%27",
 			StatusCode: 200,
 			Headers:    map[string]string{},
 			Body:       []byte("You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1"),
@@ -350,8 +350,8 @@ func TestSQLiCheck_Run_NoSQLi(t *testing.T) {
 	}
 
 	fakeResponses := map[string]types.Response{
-		"http://example.com/search?q='": {
-			URL:        "http://example.com/search?q='",
+		"http://example.com/search?q=%27": {
+			URL:        "http://example.com/search?q=%27",
 			StatusCode: 200,
 			Headers:    map[string]string{},
 			Body:       []byte("Search results for '"),
@@ -377,8 +377,8 @@ func TestCMDiCheck_Run(t *testing.T) {
 	}
 
 	fakeResponses := map[string]types.Response{
-		"http://example.com/execute?cmd=; sleep 5": {
-			URL:        "http://example.com/execute?cmd=; sleep 5",
+		"http://example.com/execute?cmd=%3B+sleep+5": {
+			URL:        "http://example.com/execute?cmd=%3B+sleep+5",
 			StatusCode: 200,
 			Headers:    map[string]string{},
 			Body:       []byte("Command executed"),
@@ -410,8 +410,8 @@ func TestCMDiCheck_Run_NoCMDi(t *testing.T) {
 	}
 
 	fakeResponses := map[string]types.Response{
-		"http://example.com/execute?cmd=; sleep 5": {
-			URL:        "http://example.com/execute?cmd=; sleep 5",
+		"http://example.com/execute?cmd=%3B+sleep+5": {
+			URL:        "http://example.com/execute?cmd=%3B+sleep+5",
 			StatusCode: 200,
 			Headers:    map[string]string{},
 			Body:       []byte("Command executed"),

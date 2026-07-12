@@ -2,7 +2,7 @@ package checks
 
 import (
 	"context"
-	"strings"
+	"net/url"
 	"time"
 
 	"github.com/RodKast/Vex/pkg/types"
@@ -16,7 +16,14 @@ func (c *CMDiCheck) Name() string {
 
 func (c *CMDiCheck) Run(ctx context.Context, point types.InjectionPoint, eng types.RequestDoer) []types.Finding {
 	payload := "; sleep 5"
-	injectedURL := strings.Replace(point.URL, point.OriginalValue, payload, 1)
+	parsed, err := url.Parse(point.URL)
+	if err != nil {
+		return nil
+	}
+	params := parsed.Query()
+	params.Set(point.Parameter, payload)
+	parsed.RawQuery = params.Encode()
+	injectedURL := parsed.String()
 
 	resp := eng.Do(ctx, types.Request{URL: injectedURL, Method: point.Method})
 	if resp.Error != nil {
