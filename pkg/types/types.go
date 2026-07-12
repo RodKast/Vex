@@ -11,6 +11,7 @@ type Config struct {
 	Concurrency int
 	RateLimit   int
 	Scope       []string
+	Cookie      string
 }
 
 type Request struct {

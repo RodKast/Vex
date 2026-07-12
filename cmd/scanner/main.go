@@ -18,6 +18,7 @@ func main() {
 	timeout := flag.Int("timeout", 30, "Timeout in seconds for each request")
 	concurrency := flag.Int("concurrency", 10, "Number of concurrent requests to make")
 	rateLimit := flag.Int("rate-limit", 100, "Maximum number of requests per second")
+	cookie := flag.String("cookie", "", "Session cookie to include in requests")
 
 	flag.Parse()
 
@@ -26,7 +27,7 @@ func main() {
 	config.Timeout = *timeout
 	config.Concurrency = *concurrency
 	config.RateLimit = *rateLimit
-
+	config.Cookie = *cookie
 	fmt.Printf("Configuration: %+v\n", config)
 
 	if config.Target == "" {
