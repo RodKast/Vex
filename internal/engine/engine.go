@@ -2,8 +2,10 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/RodKast/Vex/pkg/types"
@@ -29,6 +31,9 @@ func NewEngine(cfg types.Config) *Engine {
 
 func (e *Engine) Do(ctx context.Context, req types.Request) types.Response {
 	start := time.Now()
+	if !e.inScope(req.URL) {
+		return types.Response{URL: req.URL, Error: fmt.Errorf("host not in scope")}
+	}
 	r, err := http.NewRequestWithContext(ctx, req.Method, req.URL, nil)
 	if err != nil {
 		return types.Response{URL: req.URL, Error: err, Elapsed: time.Since(start)}
@@ -92,4 +97,20 @@ func (e *Engine) Run(ctx context.Context, requests []types.Request) []types.Resp
 	}
 	return responses
 
+}
+
+func (e *Engine) inScope(rawURL string) bool {
+	if len(e.config.Scope) == 0 {
+		return true
+	}
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	for _, allowed := range e.config.Scope {
+		if parsed.Hostname() == allowed {
+			return true
+		}
+	}
+	return false
 }
