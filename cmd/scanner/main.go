@@ -12,6 +12,7 @@ import (
 	"github.com/RodKast/Vex/internal/checks"
 	"github.com/RodKast/Vex/internal/crawler"
 	"github.com/RodKast/Vex/internal/engine"
+	"github.com/RodKast/Vex/internal/output"
 	"github.com/RodKast/Vex/pkg/types"
 )
 
@@ -69,14 +70,6 @@ func main() {
 
 	findings := checks.RunAll(ctx, points, eng)
 
-	fmt.Printf("\n=== Findings (%d) ===\n", len(findings))
-	seen := map[string]bool{}
-	for _, f := range findings {
-		key := f.Title + f.URL
-		if seen[key] {
-			continue
-		}
-		seen[key] = true
-		fmt.Printf("[%s] %s - %s\n", f.Severity, f.Title, f.URL)
-	}
+	output.PrintFindings(findings)
+	output.PrintSummary(findings)
 }
