@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"net/url"
+	"strings"
 
 	"github.com/RodKast/Vex/internal/checks"
 	"github.com/RodKast/Vex/internal/crawler"
@@ -23,10 +25,21 @@ func main() {
 	concurrency := flag.Int("concurrency", 10, "Number of concurrent requests to make")
 	rateLimit := flag.Int("rate-limit", 100, "Maximum number of requests per second")
 	cookie := flag.String("cookie", "", "Session cookie to include in requests")
+	scope := flag.String("scope", "", "Comma-separated list of allowed hostnames (defaults to target hostname)")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
 
 
 	flag.Parse()
+
+	config := types.NewConfig()
+	if *scope != "" {
+	    config.Scope = strings.Split(*scope, ",")
+	} else {
+	    parsed, err := url.Parse(*target)
+	    if err == nil && parsed.Hostname() != "" {
+	        config.Scope = []string{parsed.Hostname()}
+	    }
+	}
 
 	loglevel := slog.LevelInfo
 	if *verbose {
@@ -37,7 +50,6 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	config := types.NewConfig()
 	config.Target = *target
 	config.Timeout = *timeout
 	config.Concurrency = *concurrency
