@@ -5,11 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
 	"os/signal"
-	"syscall"
-	"net/url"
 	"strings"
+	"syscall"
 
 	"github.com/RodKast/Vex/internal/checks"
 	"github.com/RodKast/Vex/internal/crawler"
@@ -19,27 +19,47 @@ import (
 )
 
 func main() {
-	fmt.Println("Vex Starting...")
-	target := flag.String("target", "", "Target URL or IP address to scan")
-	timeout := flag.Int("timeout", 30, "Timeout in seconds for each request")
-	concurrency := flag.Int("concurrency", 10, "Number of concurrent requests to make")
-	rateLimit := flag.Int("rate-limit", 100, "Maximum number of requests per second")
+	target := flag.String("target", "", "Target URL to scan (required)")
+	timeout := flag.Int("timeout", 30, "Request timeout in seconds")
+	concurrency := flag.Int("concurrency", 10, "Number of concurrent requests")
+	rateLimit := flag.Int("rate-limit", 100, "Max requests per second")
 	cookie := flag.String("cookie", "", "Session cookie to include in requests")
-	scope := flag.String("scope", "", "Comma-separated list of allowed hostnames (defaults to target hostname)")
+	scope := flag.String("scope", "", "Allowed hostnames, comma-separated (default: target hostname)")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
 
+	flag.Usage = func() {
+		fmt.Fprint(os.Stderr, "\033[31m"+`
+██╗   ██╗███████╗██╗  ██╗
+██║   ██║██╔════╝╚██╗██╔╝
+██║   ██║█████╗   ╚███╔╝
+╚██╗ ██╔╝██╔══╝   ██╔██╗
+ ╚████╔╝ ███████╗██╔╝ ██╗
+  ╚═══╝  ╚══════╝╚═╝  ╚═╝
+`+"\033[0m")
+		fmt.Fprint(os.Stderr, "\033[90mA web vulnerability scanner\033[0m\n\n")
+		fmt.Fprint(os.Stderr, "\033[33mUSAGE:\033[0m\n")
+		fmt.Fprint(os.Stderr, "  vex -target <url> [options]\n\n")
+		fmt.Fprint(os.Stderr, "\033[33mOPTIONS:\033[0m\n")
+		fmt.Fprint(os.Stderr, "  \033[32m-target\033[0m      Target URL to scan (required)\n")
+		fmt.Fprint(os.Stderr, "  \033[32m-timeout\033[0m     Request timeout in seconds (default: 30)\n")
+		fmt.Fprint(os.Stderr, "  \033[32m-concurrency\033[0m Number of concurrent requests (default: 10)\n")
+		fmt.Fprint(os.Stderr, "  \033[32m-rate-limit\033[0m  Max requests per second (default: 100)\n")
+		fmt.Fprint(os.Stderr, "  \033[32m-cookie\033[0m      Session cookie to include in requests\n")
+		fmt.Fprint(os.Stderr, "  \033[32m-scope\033[0m       Allowed hostnames, comma-separated (default: target hostname)\n")
+		fmt.Fprint(os.Stderr, "  \033[32m-verbose\033[0m     Enable verbose logging\n\n")
+	}
 
 	flag.Parse()
 
-	config := types.NewConfig()
-	if *scope != "" {
-	    config.Scope = strings.Split(*scope, ",")
-	} else {
-	    parsed, err := url.Parse(*target)
-	    if err == nil && parsed.Hostname() != "" {
-	        config.Scope = []string{parsed.Hostname()}
-	    }
-	}
+	fmt.Print("\033[31m" + `
+██╗   ██╗███████╗██╗  ██╗
+██║   ██║██╔════╝╚██╗██╔╝
+██║   ██║█████╗   ╚███╔╝
+╚██╗ ██╔╝██╔══╝   ██╔██╗
+ ╚████╔╝ ███████╗██╔╝ ██╗
+  ╚═══╝  ╚══════╝╚═╝  ╚═╝
+` + "\033[0m")
+	fmt.Println("\033[90mA web vulnerability scanner\033[0m")
 
 	loglevel := slog.LevelInfo
 	if *verbose {
@@ -50,18 +70,29 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
+	if *target == "" {
+		fmt.Fprintln(os.Stderr, "\033[31mError: -target flag is required\033[0m")
+		fmt.Fprintln(os.Stderr, "Run 'vex -help' for usage.")
+		os.Exit(1)
+	}
+
+	config := types.NewConfig()
 	config.Target = *target
 	config.Timeout = *timeout
 	config.Concurrency = *concurrency
 	config.RateLimit = *rateLimit
 	config.Cookie = *cookie
-	slog.Info("VeX starting", "target", config.Target, "concurrency", 
-	config.Concurrency, "rate-limit", config.RateLimit)
-
-	if config.Target == "" {
-		fmt.Println("Error: -target flag is required")
-		os.Exit(1)
+	if *scope != "" {
+		config.Scope = strings.Split(*scope, ",")
+	} else {
+		parsed, err := url.Parse(*target)
+		if err == nil && parsed.Hostname() != "" {
+			config.Scope = []string{parsed.Hostname()}
+		}
 	}
+
+	slog.Info("VeX starting", "target", config.Target, "concurrency",
+		config.Concurrency, "rate-limit", config.RateLimit)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
