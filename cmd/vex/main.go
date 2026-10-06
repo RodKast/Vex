@@ -26,7 +26,8 @@ func main() {
 	cookie := flag.String("cookie", "", "Session cookie to include in requests")
 	scope := flag.String("scope", "", "Allowed hostnames, comma-separated (default: target hostname)")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
-
+	jsonOutput := flag.Bool("json", false, "Enable JSON output")
+	
 	flag.Usage = func() {
 		fmt.Fprint(os.Stderr, "\033[31m"+`
 ██╗   ██╗███████╗██╗  ██╗
@@ -47,8 +48,8 @@ func main() {
 		fmt.Fprint(os.Stderr, "  \033[32m-cookie\033[0m      Session cookie to include in requests\n")
 		fmt.Fprint(os.Stderr, "  \033[32m-scope\033[0m       Allowed hostnames, comma-separated (default: target hostname)\n")
 		fmt.Fprint(os.Stderr, "  \033[32m-verbose\033[0m     Enable verbose logging\n\n")
+		fmt.Fprint(os.Stderr, "  \033[32m-json\033[0m        Output results as JSON\n")	
 	}
-
 	flag.Parse()
 
 	fmt.Print("\033[31m" + `
@@ -113,6 +114,10 @@ func main() {
 
 	findings := checks.RunAll(ctx, points, eng)
 
-	output.PrintFindings(findings)
-	output.PrintSummary(findings)
+	if *jsonOutput {
+		output.PrintJSON(findings)
+	} else {
+		output.PrintFindings(findings)
+		output.PrintSummary(findings)
+	}
 }
