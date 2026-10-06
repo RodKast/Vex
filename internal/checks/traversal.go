@@ -17,13 +17,24 @@ func (p *PathTraversalCheck) Name() string {
 func (p *PathTraversalCheck) Run(ctx context.Context, point types.InjectionPoint,
 	eng types.RequestDoer) []types.Finding {
 
+	baselineParsed, err := url.Parse(point.URL)
+	if err != nil {
+		return nil
+	}
+	baselineParams := baselineParsed.Query()
+	for k, v := range point.FormParams {
+		baselineParams.Set(k, v)
+	}
+	baselineParsed.RawQuery = baselineParams.Encode()
+
 	baseline := eng.Do(ctx, types.Request{
-		URL:    point.URL,
+		URL:    baselineParsed.String(),
 		Method: point.Method,
 	})
 	if baseline.Error != nil {
 		return nil
 	}
+
 	payloads := []string{
 		"../../../../etc/passwd",
 		"..%2F..%2F..%2F..%2Fetc%2Fpasswd",
@@ -36,6 +47,9 @@ func (p *PathTraversalCheck) Run(ctx context.Context, point types.InjectionPoint
 			continue
 		}
 		params := parsed.Query()
+		for k, v := range point.FormParams {
+			params.Set(k, v)
+		}
 		params.Set(point.Parameter, payload)
 		parsed.RawQuery = params.Encode()
 		injectedURL := parsed.String()

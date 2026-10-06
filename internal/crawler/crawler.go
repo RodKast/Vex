@@ -25,32 +25,27 @@ func NewCrawler(eng *engine.Engine, config types.Config) *Crawler {
 		visited: make(map[string]bool),
 		points:  []types.InjectionPoint{},
 	}
-
 }
 
 func (c *Crawler) Crawl(ctx context.Context, startURL string) []types.InjectionPoint {
 	queue := []string{startURL}
 
 	for len(queue) > 0 {
-		// pop first item
-		url := queue[0]
+		u := queue[0]
 		queue = queue[1:]
 
-		// skip if visited
-		if c.visited[url] {
+		if c.visited[u] {
 			continue
 		}
-		c.visited[url] = true
-		c.extractQueryParams(url)
+		c.visited[u] = true
+		c.extractQueryParams(u)
 
-		// fetch
-		resp := c.engine.Do(ctx, types.Request{URL: url, Method: "GET"})
+		resp := c.engine.Do(ctx, types.Request{URL: u, Method: "GET"})
 		if resp.Error != nil {
 			continue
 		}
 
-		// parse (we'll write this next)
-		newLinks := c.parse(ctx, url, resp.Body)
+		newLinks := c.parse(ctx, u, resp.Body)
 		queue = append(queue, newLinks...)
 	}
 
@@ -67,24 +62,70 @@ func (c *Crawler) parse(_ context.Context, baseURL string, body []byte) []string
 
 	var walk func(*html.Node)
 	walk = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "a" {
-			for _, attr := range n.Attr {
-				if attr.Key == "href" {
-					base, err := url.Parse(baseURL)
-					if err != nil {
-						continue
-					}
-					ref, err := url.Parse(attr.Val)
-					if err != nil {
-						continue
-					}
-					resolved := base.ResolveReference(ref).String()
-					if strings.Contains(resolved, c.config.Target) {
-						links = append(links, resolved)
+		if n.Type == html.ElementNode {
+			switch n.Data {
+			case "a":
+				for _, attr := range n.Attr {
+					if attr.Key == "href" {
+						base, err := url.Parse(baseURL)
+						if err != nil {
+							break
+						}
+						ref, err := url.Parse(attr.Val)
+						if err != nil {
+							break
+						}
+						resolved := base.ResolveReference(ref).String()
+						if strings.Contains(resolved, c.config.Target) {
+							links = append(links, resolved)
+						}
 					}
 				}
+			case "form":
+				method := "GET"
+				for _, attr := range n.Attr {
+					if attr.Key == "method" && strings.ToUpper(attr.Val) == "POST" {
+						method = "POST"
+					}
+				}
+				formInputs := collectFormInputs(n)
+				for _, input := range formInputs {
+					others := map[string]string{}
+					for _, other := range formInputs {
+						if other.name != input.name {
+							others[other.name] = other.value
+						}
+					}
+					c.points = append(c.points, types.InjectionPoint{
+						URL:           baseURL,
+						Parameter:     input.name,
+						Type:          "form",
+						Method:        method,
+						OriginalValue: input.value,
+						FormParams:    others,
+					})
+				}
 			}
-		} else if n.Data == "input" {
+		}
+		for child := n.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
+		}
+	}
+	walk(doc)
+
+	return links
+}
+
+type formInput struct {
+	name  string
+	value string
+}
+
+func collectFormInputs(formNode *html.Node) []formInput {
+	var inputs []formInput
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "input" {
 			var name, value string
 			for _, attr := range n.Attr {
 				switch attr.Key {
@@ -95,22 +136,15 @@ func (c *Crawler) parse(_ context.Context, baseURL string, body []byte) []string
 				}
 			}
 			if name != "" {
-				c.points = append(c.points, types.InjectionPoint{
-					URL:           baseURL,
-					Parameter:     name,
-					Type:          "form",
-					Method:        "POST",
-					OriginalValue: value,
-				})
+				inputs = append(inputs, formInput{name: name, value: value})
 			}
 		}
 		for child := n.FirstChild; child != nil; child = child.NextSibling {
 			walk(child)
 		}
 	}
-	walk(doc)
-
-	return links
+	walk(formNode)
+	return inputs
 }
 
 func (c *Crawler) extractQueryParams(rawURL string) {

@@ -36,6 +36,7 @@ type InjectionPoint struct {
 	Type          string
 	Method        string
 	OriginalValue string
+	FormParams    map[string]string
 }
 
 type Finding struct {

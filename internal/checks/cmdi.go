@@ -16,16 +16,27 @@ func (c *CMDiCheck) Name() string {
 
 func (c *CMDiCheck) Run(ctx context.Context, point types.InjectionPoint, eng types.RequestDoer) []types.Finding {
 	payload := "; sleep 5"
+
 	parsed, err := url.Parse(point.URL)
 	if err != nil {
 		return nil
 	}
 	params := parsed.Query()
+	for k, v := range point.FormParams {
+		params.Set(k, v)
+	}
 	params.Set(point.Parameter, payload)
 	parsed.RawQuery = params.Encode()
 	injectedURL := parsed.String()
 
-	baseline := eng.Do(ctx, types.Request{URL: point.URL, Method: point.Method})
+	baselineParsed, _ := url.Parse(point.URL)
+	baselineParams := baselineParsed.Query()
+	for k, v := range point.FormParams {
+		baselineParams.Set(k, v)
+	}
+	baselineParsed.RawQuery = baselineParams.Encode()
+
+	baseline := eng.Do(ctx, types.Request{URL: baselineParsed.String(), Method: point.Method})
 	if baseline.Error != nil {
 		return nil
 	}
