@@ -1,0 +1,30 @@
+# Binaries
+vex
+*.exe
+*.out
+
+# Build output
+/bin/
+/dist/
+
+# Go
+vendor/
+*.test
+*.prof
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Internal docs
+FIXES.md
