@@ -13,9 +13,9 @@ func (s *ServerCheck) Name() string {
 	return "Server Version Disclosure"
 }
 
-func (s *ServerCheck) Run(ctx context.Context, point types.InjectionPoint, eng types.RequestDoer) []types.Finding {
+func (s *ServerCheck) Run(ctx context.Context, url string, eng types.RequestDoer) []types.Finding {
 	resp := eng.Do(ctx, types.Request{
-		URL:    point.URL,
+		URL:    url,
 		Method: "GET"})
 	if resp.Error != nil {
 		return nil
@@ -31,8 +31,7 @@ func (s *ServerCheck) Run(ctx context.Context, point types.InjectionPoint, eng t
 		return []types.Finding{
 			{
 				Title:     "Server Version Disclosure",
-				URL:       point.URL,
-				Parameter: point.URL,
+				URL:       url,
 				Severity:  "low",
 				Evidence:  server,
 				Confirmed: true,
@@ -43,5 +42,5 @@ func (s *ServerCheck) Run(ctx context.Context, point types.InjectionPoint, eng t
 }
 
 func init() {
-	Register(&ServerCheck{})
+	RegisterPage(&ServerCheck{})
 }

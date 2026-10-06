@@ -91,14 +91,14 @@ func (e *Engine) Run(ctx context.Context, requests []types.Request) []types.Resp
 		close(jobs)
 	}()
 
-for i := 0; i < len(requests); i++ {
-    select {
-    case resp := <-results:
-        responses = append(responses, resp)
-    case <-ctx.Done():
-        return responses
-    }
-}
+	for i := 0; i < len(requests); i++ {
+		select {
+		case resp := <-results:
+			responses = append(responses, resp)
+		case <-ctx.Done():
+			return responses
+		}
+	}
 	return responses
 }
 

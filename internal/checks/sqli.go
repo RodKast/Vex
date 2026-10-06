@@ -25,6 +25,11 @@ func (s *SQLiCheck) Run(ctx context.Context, point types.InjectionPoint, eng typ
 	parsed.RawQuery = params.Encode()
 	injectedURL := parsed.String()
 
+	baseline := eng.Do(ctx, types.Request{URL: point.URL, Method: point.Method})
+	if baseline.Error != nil {
+		return nil
+	}
+
 	resp := eng.Do(ctx, types.Request{URL: injectedURL, Method: point.Method})
 	if resp.Error != nil {
 		return nil
@@ -37,7 +42,7 @@ func (s *SQLiCheck) Run(ctx context.Context, point types.InjectionPoint, eng typ
 
 	body := string(resp.Body)
 	for _, sig := range errorSignatures {
-		if strings.Contains(body, sig) {
+		if strings.Contains(body, sig) && !strings.Contains(string(baseline.Body), sig) {
 			return []types.Finding{{
 				Title:       "SQL Injection",
 				URL:         point.URL,
@@ -50,8 +55,4 @@ func (s *SQLiCheck) Run(ctx context.Context, point types.InjectionPoint, eng typ
 		}
 	}
 	return nil
-}
-
-func init() {
-	Register(&SQLiCheck{})
 }

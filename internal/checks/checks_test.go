@@ -45,14 +45,14 @@ func TestHeaderCheck_Run(t *testing.T) {
 	}
 
 	fakeEng := &fakeDoer{Responses: fakeResponses}
-	findings := check.Run(ctx, point, fakeEng)
+	findings := check.Run(ctx, point.URL, fakeEng)
 
 	if len(findings) != 1 {
 		t.Errorf("Expected 1 finding, got %d", len(findings))
 	}
 
 	expectedTitle := "Missing Header: X-XSS-Protection"
-	if findings[0].Title != expectedTitle {
+	if len(findings) > 0 && findings[0].Title != expectedTitle {
 		t.Errorf("Expected finding title '%s', got '%s'", expectedTitle, findings[0].Title)
 	}
 }
@@ -75,7 +75,7 @@ func TestCookieCheck_Run(t *testing.T) {
 	}
 
 	fakeEng := &fakeDoer{Responses: fakeResponses}
-	findings := check.Run(ctx, point, fakeEng)
+	findings := check.Run(ctx, point.URL, fakeEng)
 
 	if len(findings) != 1 {
 		t.Errorf("Expected 1 finding, got %d", len(findings))
@@ -104,7 +104,7 @@ func TestServerCheck_Run(t *testing.T) {
 	}
 
 	fakeEng := &fakeDoer{Responses: fakeResponses}
-	findings := check.Run(ctx, point, fakeEng)
+	findings := check.Run(ctx, point.URL, fakeEng)
 
 	if len(findings) != 1 {
 		t.Errorf("Expected 1 finding, got %d", len(findings))
@@ -133,7 +133,7 @@ func TestServerCheck_Run_NoVersion(t *testing.T) {
 	}
 
 	fakeEng := &fakeDoer{Responses: fakeResponses}
-	findings := check.Run(ctx, point, fakeEng)
+	findings := check.Run(ctx, point.URL, fakeEng)
 
 	if len(findings) != 0 {
 		t.Errorf("Expected 0 findings, got %d", len(findings))
@@ -155,7 +155,7 @@ func TestDirListCheck_Run(t *testing.T) {
 	}
 
 	fakeEng := &fakeDoer{Responses: fakeResponses}
-	findings := check.Run(ctx, point, fakeEng)
+	findings := check.Run(ctx, point.URL, fakeEng)
 
 	if len(findings) != 1 {
 		t.Errorf("Expected 1 finding, got %d", len(findings))
@@ -182,7 +182,7 @@ func TestDirListCheck_Run_NoDirListing(t *testing.T) {
 	}
 
 	fakeEng := &fakeDoer{Responses: fakeResponses}
-	findings := check.Run(ctx, point, fakeEng)
+	findings := check.Run(ctx, point.URL, fakeEng)
 
 	if len(findings) != 0 {
 		t.Errorf("Expected 0 findings, got %d", len(findings))

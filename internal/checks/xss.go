@@ -29,6 +29,14 @@ func (x *XSSCheck) Run(ctx context.Context, point types.InjectionPoint,
 	parsed.RawQuery = params.Encode()
 	injectedURL := parsed.String()
 
+	baseline := eng.Do(ctx, types.Request{
+		URL:    point.URL,
+		Method: point.Method,
+	})
+	if baseline.Error != nil {
+		return nil
+	}
+
 	resp := eng.Do(ctx, types.Request{
 		URL:    injectedURL,
 		Method: point.Method,
@@ -37,7 +45,9 @@ func (x *XSSCheck) Run(ctx context.Context, point types.InjectionPoint,
 		return nil
 	}
 
-	if strings.Contains(string(resp.Body), nonce) {
+	baselineBody := string(baseline.Body)
+	injectedBody := string(resp.Body)
+	if strings.Contains(injectedBody, nonce) && !strings.Contains(baselineBody, nonce) {
 
 		return []types.Finding{{
 			Title:       "Reflected XSS",

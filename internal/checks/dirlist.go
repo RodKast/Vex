@@ -13,9 +13,9 @@ func (d *DirListCheck) Name() string {
 	return "Directory Listing"
 }
 
-func (d *DirListCheck) Run(ctx context.Context, point types.InjectionPoint, eng types.RequestDoer) []types.Finding {
+func (d *DirListCheck) Run(ctx context.Context, url string, eng types.RequestDoer) []types.Finding {
 	resp := eng.Do(ctx, types.Request{
-		URL:    point.URL,
+		URL:    url,
 		Method: "GET"})
 	if resp.Error != nil {
 		return nil
@@ -25,8 +25,7 @@ func (d *DirListCheck) Run(ctx context.Context, point types.InjectionPoint, eng 
 		return []types.Finding{
 			{
 				Title:     "Directory Listing Enabled",
-				URL:       point.URL,
-				Parameter: point.URL,
+				URL:       url,
 				Severity:  "medium",
 				Evidence:  string(resp.Body),
 				Confirmed: true,
@@ -44,5 +43,5 @@ func isDirectoryListing(body []byte) bool {
 }
 
 func init() {
-	Register(&DirListCheck{})
+	RegisterPage(&DirListCheck{})
 }

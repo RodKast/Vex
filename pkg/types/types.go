@@ -53,6 +53,11 @@ type VulnCheck interface {
 	Run(ctx context.Context, point InjectionPoint, eng RequestDoer) []Finding
 }
 
+type PageCheck interface {
+	Name() string
+	Run(ctx context.Context, url string, eng RequestDoer) []Finding
+}
+
 type RequestDoer interface {
 	Do(ctx context.Context, req Request) Response
 }

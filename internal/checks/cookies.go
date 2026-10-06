@@ -13,8 +13,8 @@ func (c *CookieCheck) Name() string {
 	return "Insecure Cookie Flags"
 }
 
-func (c *CookieCheck) Run(ctx context.Context, point types.InjectionPoint, eng types.RequestDoer) []types.Finding {
-	resp := eng.Do(ctx, types.Request{URL: point.URL, Method: "GET"})
+func (c *CookieCheck) Run(ctx context.Context, url string, eng types.RequestDoer) []types.Finding {
+	resp := eng.Do(ctx, types.Request{URL: url, Method: "GET"})
 	if resp.Error != nil {
 		return nil
 	}
@@ -28,7 +28,7 @@ func (c *CookieCheck) Run(ctx context.Context, point types.InjectionPoint, eng t
 	if !containsFlag(cookie, "Secure") {
 		findings = append(findings, types.Finding{
 			Title:       "Insecure Cookie Flag: Secure",
-			URL:         point.URL,
+			URL:         url,
 			Severity:    "medium",
 			Description: "Cookie is not set with the Secure flag",
 			Confirmed:   true,
@@ -38,7 +38,7 @@ func (c *CookieCheck) Run(ctx context.Context, point types.InjectionPoint, eng t
 	if !containsFlag(cookie, "HttpOnly") {
 		findings = append(findings, types.Finding{
 			Title:       "Insecure Cookie Flag: HttpOnly",
-			URL:         point.URL,
+			URL:         url,
 			Severity:    "medium",
 			Description: "Cookie is not set with the HttpOnly flag",
 			Confirmed:   true,
@@ -53,5 +53,5 @@ func containsFlag(cookie, flag string) bool {
 }
 
 func init() {
-	Register(&CookieCheck{})
+	RegisterPage(&CookieCheck{})
 }

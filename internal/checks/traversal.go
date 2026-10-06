@@ -17,6 +17,13 @@ func (p *PathTraversalCheck) Name() string {
 func (p *PathTraversalCheck) Run(ctx context.Context, point types.InjectionPoint,
 	eng types.RequestDoer) []types.Finding {
 
+	baseline := eng.Do(ctx, types.Request{
+		URL:    point.URL,
+		Method: point.Method,
+	})
+	if baseline.Error != nil {
+		return nil
+	}
 	payloads := []string{
 		"../../../../etc/passwd",
 		"..%2F..%2F..%2F..%2Fetc%2Fpasswd",
@@ -41,7 +48,10 @@ func (p *PathTraversalCheck) Run(ctx context.Context, point types.InjectionPoint
 			continue
 		}
 
-		if strings.Contains(string(resp.Body), "root:") || strings.Contains(string(resp.Body), "[extensions]") {
+		if (strings.Contains(string(resp.Body), "root:") ||
+			strings.Contains(string(resp.Body), "[extensions]")) &&
+			!strings.Contains(string(baseline.Body), "root:") &&
+			!strings.Contains(string(baseline.Body), "[extensions]") {
 			return []types.Finding{{
 				Title:       "Path Traversal",
 				URL:         point.URL,

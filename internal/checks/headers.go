@@ -12,8 +12,8 @@ func (h *HeaderCheck) Name() string {
 	return "Missing Security Headers"
 }
 
-func (h *HeaderCheck) Run(ctx context.Context, point types.InjectionPoint, eng types.RequestDoer) []types.Finding {
-	resp := eng.Do(ctx, types.Request{URL: point.URL, Method: "GET"})
+func (h *HeaderCheck) Run(ctx context.Context, url string, eng types.RequestDoer) []types.Finding {
+	resp := eng.Do(ctx, types.Request{URL: url, Method: "GET"})
 	if resp.Error != nil {
 		return nil
 	}
@@ -30,7 +30,7 @@ func (h *HeaderCheck) Run(ctx context.Context, point types.InjectionPoint, eng t
 		if resp.Headers[header] == "" {
 			findings = append(findings, types.Finding{
 				Title:       "Missing Header: " + header,
-				URL:         point.URL,
+				URL:         url,
 				Severity:    "low",
 				Description: header + " header is not set",
 				Confirmed:   true,
@@ -41,5 +41,5 @@ func (h *HeaderCheck) Run(ctx context.Context, point types.InjectionPoint, eng t
 }
 
 func init() {
-	Register(&HeaderCheck{})
+	RegisterPage(&HeaderCheck{})
 }

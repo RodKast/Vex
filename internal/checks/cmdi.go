@@ -25,12 +25,17 @@ func (c *CMDiCheck) Run(ctx context.Context, point types.InjectionPoint, eng typ
 	parsed.RawQuery = params.Encode()
 	injectedURL := parsed.String()
 
+	baseline := eng.Do(ctx, types.Request{URL: point.URL, Method: point.Method})
+	if baseline.Error != nil {
+		return nil
+	}
+
 	resp := eng.Do(ctx, types.Request{URL: injectedURL, Method: point.Method})
 	if resp.Error != nil {
 		return nil
 	}
 
-	if resp.Elapsed > 4*time.Second {
+	if resp.Elapsed > 4*time.Second && resp.Elapsed > baseline.Elapsed*2 {
 		return []types.Finding{{
 			Title:       "Command Injection",
 			URL:         point.URL,
