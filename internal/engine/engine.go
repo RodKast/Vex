@@ -91,12 +91,15 @@ func (e *Engine) Run(ctx context.Context, requests []types.Request) []types.Resp
 		close(jobs)
 	}()
 
-	// Collect results
-	for i := 0; i < len(requests); i++ {
-		responses = append(responses, <-results)
-	}
+for i := 0; i < len(requests); i++ {
+    select {
+    case resp := <-results:
+        responses = append(responses, resp)
+    case <-ctx.Done():
+        return responses
+    }
+}
 	return responses
-
 }
 
 func (e *Engine) inScope(rawURL string) bool {
