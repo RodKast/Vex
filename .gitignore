@@ -27,4 +27,4 @@ Thumbs.db
 *.swo
 
 # Internal docs
-FIXES.md
+.FIXES.md
